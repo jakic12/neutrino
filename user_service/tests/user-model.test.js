@@ -38,14 +38,14 @@ describe('User model parsing', function () {
     let user = new User(null, 'tUsername', 'tPassword');
     let serialized = serialize(user);
     should.equal(!(serialized instanceof User), true);
-    should.equal(serialized.username, user.userName);
+    should.equal(serialized.username, user.username);
     should.equal(serialized.password, user.password);
   });
   it('should deserialize user to User object', function () {
     let user = [{username: 'tUsername', password: 'tPassword'}];
     let deserialized = deserialize(user, 'single');
     should.equal(deserialized instanceof User, true);
-    should.equal(deserialized.userName, user[0].username);
+    should.equal(deserialized.username, user[0].username);
     should.equal(deserialized.password, user[0].password);
   });
   it('should serialize multiple users to DB schema', function () {
@@ -73,8 +73,8 @@ describe('User model parsing', function () {
     let deserialized = deserialize(users, 'multi');
     deserialized.forEach(user => {
       should.equal(user instanceof User, true);
-      should.equal(user.userName !== null &&
-        user.userName !== undefined, true);
+      should.equal(user.username !== null &&
+        user.username !== undefined, true);
       should.equal(user.password !== null &&
         user.password !== undefined, true);
     });
@@ -84,7 +84,7 @@ describe('User model parsing', function () {
     let user = [ {uuid: '123', username: 'tUsername', password: 'tPassword'} ];
     let deserialized = deserialize(user, 'single');
     should.equal(deserialized instanceof User, true);
-    should.equal(deserialized.userName, 'tUsername');
+    should.equal(deserialized.username, 'tUsername');
     should.equal(deserialized.password, 'tPassword');
     should.equal(deserialized.uuid, '123');
   });

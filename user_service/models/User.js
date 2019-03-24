@@ -4,9 +4,9 @@ const getUUID = require('uuid');
 
 module.exports.User = class {
 
-  constructor(uuid, userName, password, about, description, date) {
+  constructor(uuid, username, password, about, description, date) {
     this.uuid = uuid === null || uuid === undefined ? getUUID() : uuid;
-    this.userName = userName === undefined ? '' : userName;
+    this.username = username === undefined ? '' : username;
     this.password = password === undefined ? '' : password;
     this.about = about === undefined ? '' : about;
     this.description = description === undefined ? '' : description;
@@ -14,18 +14,18 @@ module.exports.User = class {
   }
 
   validate() {
-    const {userName, password, about, description} = this;
-    if(!userName.length > 7)
+    const {username, password, about, description} = this;
+    if(!username.length > 7)
       throw new ValidationError("Username too short");
     if (!password.length > 7)
       throw new ValidationError("Password too short");
   }
 
   exist() {
-    const {uuid, userName, password} = this;
+    const {uuid, username, password} = this;
     return (
       (uuid !== null) &&
-      (userName !== null && userName !== undefined) &&
+      (username !== null && username !== undefined) &&
       (password !== null && password !== undefined)
     );
   }

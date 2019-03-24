@@ -37,7 +37,7 @@ const serializeSingleUser = (user) => {
     throw new Error("Not an user instance");
   return {
     uuid: user.uuid,
-    username: user.userName,
+    username: user.username,
     password: user.password,
     about: user.about,
     description: user.description,
