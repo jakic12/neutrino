@@ -1,9 +1,9 @@
 module.exports = {
-  database: {
+  db: {
     host: 'localhost',
     user: 'root',
     password: 'rootPass',
-    database: 'user-service'
+    database: 'neutrino_user_service'
   },
   app: {
     name: 'user-service',

@@ -10,8 +10,16 @@ router.get('/', async (req, res, next) => {
   })
 });
 
-router.get('/user', async (req, res, next) => {
+router.get('/user/', async (req, res, next) => {
   let users = await repo.getAll();
+  res.send({
+    status: 'ok',
+    users: users
+  })
+});
+
+router.get('/user/:userUUID', async (req, res, next) => {
+  let users = await repo.get(req.params.userUUID);
   res.send({
     status: 'ok',
     users: users
@@ -28,4 +36,4 @@ router.post('/user', async (req, res, next) => {
   })
 });
 
-module.exports.router = router;
+module.exports = router;

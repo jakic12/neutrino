@@ -1,16 +1,23 @@
-const DBError = require('../utils/errors').DatabaseError;
-const dbConfig = require('../config/app.config').database;
+const DatabaseError = require('../utils/errors').DatabaseError;
+const {host, user, password, database} = require('./config/app.config').db;
+const serialize = require('../models/parser').serializeSubscription;
 const mysql = require('mysql');
+const moment = require('moment');
 
-const db = mysql.createConnection(dbConfig);
+const db = mysql.createConnection({
+  host,
+  user,
+  password,
+  database
+});
 
-async function addSubscription(subscriberUUID, supplierUUID) {
+async function addSubscription(subscriberUUID, supplierUUID, datetime = moment()) {
   return new Promise(resolve => {
-    db.query("INSERT INTO subscription (sub_id, sup_id) VALUES (?,?)",
-      [subscriberUUID, supplierUUID],
+    db.query(`INSERT INTO subscription (subscriber, publisher, datetime) 
+      VALUES (?, ?, ?)`, [subscriberUUID, supplierUUID, datetime],
       (error, result) => {
         if (error)
-          return resolve(new DBError(error.message));
+          return resolve(new DatabaseError(error.message));
         else return resolve(result);
       })
   })
