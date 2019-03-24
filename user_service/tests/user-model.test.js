@@ -1,7 +1,7 @@
 const User = require('../models/User').User;
 
-const serialize = require('../models/parser').serializeUser;
-const deserialize = require('../models/parser').deserializeUser;
+const serialize = require('../repo/parser').serializeUser;
+const deserialize = require('../repo/parser').deserializeUser;
 
 const moment = require('moment');
 
@@ -42,11 +42,11 @@ describe('User model parsing', function () {
     should.equal(serialized.password, user.password);
   });
   it('should deserialize user to User object', function () {
-    let user = {username: 'tUsername', password: 'tPassword'};
-    let deserialized = deserialize(user);
+    let user = [{username: 'tUsername', password: 'tPassword'}];
+    let deserialized = deserialize(user, 'single');
     should.equal(deserialized instanceof User, true);
-    should.equal(deserialized.userName, user.username);
-    should.equal(deserialized.password, user.password);
+    should.equal(deserialized.userName, user[0].username);
+    should.equal(deserialized.password, user[0].password);
   });
   it('should serialize multiple users to DB schema', function () {
     let users = [
@@ -70,7 +70,7 @@ describe('User model parsing', function () {
       {username: 'tUsername2', password: 'tPassword2'},
       {username: 'tUsername3', password: 'tPassword3'},
     ];
-    let deserialized = deserialize(users);
+    let deserialized = deserialize(users, 'multi');
     deserialized.forEach(user => {
       should.equal(user instanceof User, true);
       should.equal(user.userName !== null &&
@@ -79,6 +79,14 @@ describe('User model parsing', function () {
         user.password !== undefined, true);
     });
     should.equal(deserialized.length, 3);
+  });
+  it('should deserialize single user to User object', function () {
+    let user = [ {uuid: '123', username: 'tUsername', password: 'tPassword'} ];
+    let deserialized = deserialize(user, 'single');
+    should.equal(deserialized instanceof User, true);
+    should.equal(deserialized.userName, 'tUsername');
+    should.equal(deserialized.password, 'tPassword');
+    should.equal(deserialized.uuid, '123');
   });
 });
 

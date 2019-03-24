@@ -1,6 +1,6 @@
 const DatabaseError = require('../utils/errors').DatabaseError;
 const {host, user, password, database} = require('./config/app.config').db;
-const serialize = require('../models/parser').serializeSubscription;
+const serialize = require('./parser').serializeSubscription;
 const mysql = require('mysql');
 const moment = require('moment');
 

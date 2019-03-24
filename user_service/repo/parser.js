@@ -1,20 +1,26 @@
 const moment = require('moment');
-const User = require('./User').User;
+const User = require('../models/User').User;
+
+// DB serialization / deserialization
 
 function serializeUser(data) {
   if (!data)
     return new Error("Data is null or undefined");
   if (data instanceof Array && data.length > 1)
     return data.map(user => serializeSingleUser(user));
+  if (data.length === 0) return [];
   return serializeSingleUser(data);
 }
 
-function deserializeUser(data) {
+function deserializeUser(data, mode) {
   if (!data)
     return new Error("Data is null or undefined");
-  if (data instanceof Array && data.length > 1)
+  if (data instanceof Array && mode === 'multi')
     return data.map(user => deserializeSingleUser(user));
-  return deserializeSingleUser(data);
+  if (data.length === 0 && mode === 'multi') return [];
+  if (mode === 'single')
+    return deserializeSingleUser(data[0]);
+  else throw new Error('Correct mode not provided');
 }
 
 function serializeSubscription(data) {
@@ -22,6 +28,7 @@ function serializeSubscription(data) {
     return new Error("Data is null or undefined");
   if (data instanceof Array)
     return data.map(subsc => serializeSingleSubscription(subsc));
+  if (data.length === 0) return [];
   return serializeSingleSubscription(data);
 }
 
