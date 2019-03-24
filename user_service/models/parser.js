@@ -14,7 +14,7 @@ function deserializeUser(data) {
     return new Error("Data is null or undefined");
   if (data instanceof Array && data.length > 1)
     return data.map(user => deserializeSingleUser(user));
-  return deserializeSingleUser(data[0]);
+  return deserializeSingleUser(data);
 }
 
 function serializeSubscription(data) {
