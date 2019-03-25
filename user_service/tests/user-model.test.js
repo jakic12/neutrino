@@ -1,7 +1,7 @@
 const User = require('../models/User').User;
 
-const serialize = require('../models/parser').serializeUser;
-const deserialize = require('../models/parser').deserializeUser;
+const serialize = require('../repo/parser').serializeUser;
+const deserialize = require('../repo/parser').deserializeUser;
 
 const moment = require('moment');
 
@@ -38,15 +38,15 @@ describe('User model parsing', function () {
     let user = new User(null, 'tUsername', 'tPassword');
     let serialized = serialize(user);
     should.equal(!(serialized instanceof User), true);
-    should.equal(serialized.username, user.userName);
+    should.equal(serialized.username, user.username);
     should.equal(serialized.password, user.password);
   });
   it('should deserialize user to User object', function () {
-    let user = {username: 'tUsername', password: 'tPassword'};
-    let deserialized = deserialize(user);
+    let user = [{username: 'tUsername', password: 'tPassword'}];
+    let deserialized = deserialize(user, 'single');
     should.equal(deserialized instanceof User, true);
-    should.equal(deserialized.userName, user.username);
-    should.equal(deserialized.password, user.password);
+    should.equal(deserialized.username, user[0].username);
+    should.equal(deserialized.password, user[0].password);
   });
   it('should serialize multiple users to DB schema', function () {
     let users = [
@@ -70,15 +70,23 @@ describe('User model parsing', function () {
       {username: 'tUsername2', password: 'tPassword2'},
       {username: 'tUsername3', password: 'tPassword3'},
     ];
-    let deserialized = deserialize(users);
+    let deserialized = deserialize(users, 'multi');
     deserialized.forEach(user => {
       should.equal(user instanceof User, true);
-      should.equal(user.userName !== null &&
-        user.userName !== undefined, true);
+      should.equal(user.username !== null &&
+        user.username !== undefined, true);
       should.equal(user.password !== null &&
         user.password !== undefined, true);
     });
     should.equal(deserialized.length, 3);
+  });
+  it('should deserialize single user to User object', function () {
+    let user = [ {uuid: '123', username: 'tUsername', password: 'tPassword'} ];
+    let deserialized = deserialize(user, 'single');
+    should.equal(deserialized instanceof User, true);
+    should.equal(deserialized.username, 'tUsername');
+    should.equal(deserialized.password, 'tPassword');
+    should.equal(deserialized.uuid, '123');
   });
 });
 

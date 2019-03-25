@@ -1,5 +1,12 @@
 /.idea
 .DS_Store
 /.vscode
-*/.nyc_output
-*/coverage
+**/.nyc_output
+**/coverage
+**/node_modules
+**/144
+**/240
+**/360
+**/480
+**/720
+**/1080

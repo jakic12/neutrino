@@ -1,7 +1,7 @@
 const DatabaseError = require('../utils/errors').DatabaseError;
 const dbConfig = require('../config/app.config').database;
-const serialize = require('../models/parser').serializeUser;
-const deserialize = require('../models/parser').deserializeUser;
+const serialize = require('./parser').serializeUser;
+const deserialize = require('./parser').deserializeUser;
 const {host, user, password, database} = require('../config/app.config').db;
 const mysql = require('mysql');
 
@@ -35,7 +35,7 @@ async function getAll() {
       (error, result) => {
         if (error)
           return resolve(new DatabaseError(error.message));
-        else return resolve(deserialize(result));
+        else return resolve(deserialize(result, 'multi'));
       })
   })
 }
@@ -46,7 +46,7 @@ async function get(uuid) {
       [uuid], (error, result) => {
         if (error)
           return resolve(new DatabaseError(error.message));
-        else return resolve(deserialize(result));
+        else return resolve(deserialize(result, 'single'));
       })
   })
 }
@@ -57,7 +57,7 @@ async function getByUsernameAndPassword(username, password) {
       [username, password], (error, result) => {
         if (error)
           return resolve(new DatabaseError(error.message));
-        else return resolve(deserialize(result));
+        else return resolve(deserialize(result, 'multi'));
       })
   })
 }
@@ -68,7 +68,18 @@ async function getByUsername(username) {
       [username], (error, result) => {
         if (error)
           return resolve(new DatabaseError(error.message));
-        else return resolve(deserialize(result));
+        else return resolve(deserialize(result, 'multi'));
+      })
+  })
+}
+
+async function removeByUUID(uuid) {
+  return new Promise(resolve => {
+    db.query("DELETE FROM user WHERE uuid = ?",
+      [uuid], (error, result) => {
+        if (error)
+          return resolve(new DatabaseError(error.message));
+        else return resolve(result);
       })
   })
 }
@@ -79,4 +90,5 @@ module.exports = {
   getAll: getAll,
   getByUsernameAndPassword,
   getByUsername,
+  removeByUUID
 };

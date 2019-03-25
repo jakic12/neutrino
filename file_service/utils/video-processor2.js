@@ -1,0 +1,81 @@
+var ffmpeg = require('fluent-ffmpeg');
+var fs = require('fs');
+
+module.exports = {
+    process
+}
+
+function process(file_path, file_output_folder, segment_length, progress_function, callback){
+    var video = ffmpeg(file_path);
+    segment_length = segment_length || 4;
+    
+    var progress = {
+        progresses: [],
+        progress:0
+    }
+
+    var qualities = [
+        '144',
+        '240',
+        '360',
+        '480',
+        '720',
+        '1080',
+        '1440'
+    ]
+
+    video.ffprobe(function (err, metadata) {
+        if(err){
+            callback(err);
+        }else{
+            for(let i in qualities){
+                if (qualities[i] <= metadata.streams[0].height){
+                    console.log(`?x${qualities[i]}`);
+
+                    let segment_dir = `${file_output_folder}/${qualities[i]}/`;
+
+                    if (!fs.existsSync(segment_dir)) {
+                        fs.mkdirSync(segment_dir);
+                    }
+
+                    let process_id = -1;
+
+                    video.clone()
+                        .size(`?x${qualities[i]}`)
+                        .output(`${segment_dir}%3d.mp4`)
+                        .addOutputOption("-f", "segment", "-segment_time", segment_length)
+                        .on('start', ()=>{
+                            process_id = progress.progresses.length;
+                            progress.progresses.push(-1);
+                        })
+                        .on('progress', (prog)=>{
+                            progress.progresses[process_id] = prog.percent;
+                            progress.progress = progress.progresses.reduce((a, b) => a + b) / progress.progresses.length;
+                            if (progress.progress < 0){
+                                progress.progress = 0;
+                            }
+                            progress_function(progress.progress);
+                        })
+                        .on('end',()=>{
+                            progress.progresses[process_id] = 100;
+                            console.log(`process (${process_id}) ended`);
+                            let end = true;
+                            for(let j in progress.progresses){
+                                if(progress.progresses[j] != 100){
+                                    end = false;
+                                }
+                            }
+                            if(end){
+                                callback();
+                            }
+                        })
+                        .on('err',(err)=>{
+                            progress.progresses[process_id] = 100;
+                            callback(err);
+                        })
+                        .run();
+                }
+            }
+        }
+    });
+}
