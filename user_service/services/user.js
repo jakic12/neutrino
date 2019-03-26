@@ -4,6 +4,7 @@ const User = require('../models/User').User;
 
 async function register(username, password) {
   try {
+    // TODO: throw NotFoundError instead
     let user = await repo.getByUsername(username, password);
     if (user.exist()) return new ConflictError("User already exists");
     let newUser = new User(null, username, password);
