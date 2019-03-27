@@ -100,13 +100,13 @@ describe('video processor', () => {
     it('segment video', (done) => {
         var test_video = fs.readFile(testVideo, (err, data)=>{
             var video1 = new Video("test video", "test desc", null, data, null, null, () => {
-                VideoProcessor.process(`${video1.tempFolder}/${video1.uuid}`, "./tests/test_files/test_output", null, console.log, (err) => {
+                video1.segmentVideo(`./tests/test_files/test_output/${video1.uuid}`, (err) => {
                     if (err) {
                         console.log(err);
                         throw new Error("test video failed segmenting!");
                     }
 
-                    fs.readFile( testVideo , (err, data) => {
+                    fs.readFile(`./tests/test_files/test_output/${video1.uuid}/144/000.mp4`, (err, data) => {
                         if (err) {
                             throw Error(`internal test error, file ${testVideo} can not be oppened: ${err}`);
                         }
@@ -114,7 +114,23 @@ describe('video processor', () => {
                         done();
                     });
 
-                });
+                }, console.log,1000);
+
+                /*VideoProcessor.process(`${video1.tempFolder}/${video1.uuid}`, "./tests/test_files/test_output", null, console.log, (err) => {
+                    if (err) {
+                        console.log(err);
+                        throw new Error("test video failed segmenting!");
+                    }
+
+                    fs.readFile(testVideo, (err, data) => {
+                        if (err) {
+                            throw Error(`internal test error, file ${testVideo} can not be oppened: ${err}`);
+                        }
+                        should.exist(data, "last segment 144/000.mp4 is created");
+                        done();
+                    });
+
+                });*/
 
             });
             video_to_destroy = video1;
