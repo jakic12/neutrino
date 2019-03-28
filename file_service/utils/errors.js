@@ -13,7 +13,16 @@ class FileWritingError extends Error {
     }
 }
 
+class InternalVideoProcessingError extends Error {
+    constructor(file, originalError){
+        super(`file ${file}, can not be processed, err:${originalError}`);
+        this.name = "InternalVideoProcessingError";
+        this.errorCode = 500;
+    }
+}
+
 module.exports = {
     MissingData,
-    FileWritingError
+    FileWritingError,
+    InternalVideoProcessingError
 }

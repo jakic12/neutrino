@@ -22,6 +22,23 @@ class Processor {
     }
 }
 
+function getThumbnail(file_path, out_path, time, callback){
+    time = time || '00:00:00.000';
+    let out_folder = out_path.split("/").splice(0, out_path.split("/").length - 1).join("/") + "/"
+    ffmpeg(file_path)
+        .on('end', ()=>{
+            callback();
+        })
+        .on('err', (err)=>{
+            callback(err);
+        })
+        .screenshot({
+            count:1,
+            folder: out_folder,
+            filename:"thumb.png"
+        })
+}
+
 function process(file_path, file_output_folder, segment_length, progress_function, callback){
     var video = ffmpeg(file_path);
     segment_length = segment_length || 4;
@@ -99,5 +116,6 @@ function process(file_path, file_output_folder, segment_length, progress_functio
 
 module.exports = {
     process,
-    progress_object: Processor
+    progress_object: Processor,
+    getThumbnail
 }

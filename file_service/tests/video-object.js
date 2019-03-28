@@ -7,6 +7,20 @@ var { MissingData, FileWritingError } = require('../utils/errors.js');
 var fs = require('fs');
 
 var testVideo = "D:\\projects\\neutrino\\file_service\\tests\\test_files\\SampleVideo_1280x720_5mb.mp4";
+var testThumbnail = "D:\\projects\\neutrino\\file_service\\tests\\test_files\\thumbnail.png";
+
+function fileExists(path,callback){
+    fs.readFile(path, (err, data) => {
+        if (err) {
+            throw Error(`internal test error, file ${path} can not be oppened: ${err}`)
+        }else if(data){
+            callback(true);
+        }else{
+            console.log("file may be empty or doesnt exist");
+            callback(false);
+        }
+    });
+}
 
 describe('video object', () => {
     var video_to_destroy;
@@ -29,7 +43,7 @@ describe('video object', () => {
     
     it('video creation works', () => {
         var test_video = fs.readFileSync(testVideo);
-        var video1 = new Video("test video", "test desc", null, test_video, null, null, () => {
+        var video1 = new Video("test video", "test desc", null, test_video, null, null, null, () => {
             expect(video1).to.be.an.instanceof(Video, "video instance is created");
         });
         video_to_destroy = video1;
@@ -37,7 +51,8 @@ describe('video object', () => {
 
     it('video creates temp files', (done) => {
         var test_video = fs.readFileSync(testVideo);
-        var video1 = new Video("test video", "test desc", null, test_video, null, null, () => {
+        var test_thumb = fs.readFileSync(testThumbnail);
+        var video1 = new Video("test video", "test desc", null, test_video, test_thumb, null, null, () => {
             expect(video1).to.be.an.instanceof(Video, "video instance is created");
 
             fs.readFile(`temp/${video1.uuid}`, (err, data) => {
@@ -62,7 +77,7 @@ describe('video object', () => {
 
     it('video deletes thumbnail temp files', (done) => {
         var test_video = fs.readFile(testVideo, (err, data)=>{
-            var video1 = new Video("test video", "test desc", null, data, null, null, () => {
+            var video1 = new Video("test video", "test desc", null, data, null, null, null, () => {
                 video1.removeTemp(() => {
                     expect(fs.existsSync(`temp/${video1.uuid}_th`)).to.equal(false, "temp thumbnail should be deleted");
                     done();
@@ -73,7 +88,7 @@ describe('video object', () => {
 
     it('video deletes video temp files', (done) => {
         var test_video = fs.readFile(testVideo, (err, data) => {
-            var video1 = new Video("test video", "test desc", null, data, null, null, () => {
+            var video1 = new Video("test video", "test desc", null, data, null, null, null, () => {
                 video1.removeTemp(() => {
                     expect(fs.existsSync(`temp/${video1.uuid}`)).to.equal(false, "temp thumbnail should be deleted");
                     done();
@@ -97,16 +112,30 @@ describe('video processor', () => {
             done();
         }
     });
+
+    it('thumbnail is created', (done) =>{
+        var test_video = fs.readFile(testVideo, (err, data) => {
+            var video1 = new Video("test video", "test desc", null, data, null, null, `./tests/test_files/test_output/`, () => {
+                fileExists(`./tests/test_files/test_output/${video1.uuid}/thumb.png` ,result =>{
+                    expect(result).to.equal(true);
+                    done();
+                })
+            });
+            video_to_destroy = video1;
+        });
+
+    }).timeout(0);
+
     it('segment video', (done) => {
         var test_video = fs.readFile(testVideo, (err, data)=>{
-            var video1 = new Video("test video", "test desc", null, data, null, null, () => {
-                video1.segmentVideo(`./tests/test_files/test_output/${video1.uuid}`, (err) => {
+            var video1 = new Video("test video", "test desc", null, data, null, null, `./tests/test_files/test_output/`, () => {
+                video1.segmentVideo((err) => {
                     if (err) {
                         console.log(err);
                         throw new Error("test video failed segmenting!");
                     }
 
-                    fs.readFile(`./tests/test_files/test_output/${video1.uuid}/144/000.mp4`, (err, data) => {
+                    fs.readFile(`${video1.segmentFolder}/144/000.mp4`, (err, data) => {
                         if (err) {
                             throw Error(`internal test error, file ${testVideo} can not be oppened: ${err}`);
                         }

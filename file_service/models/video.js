@@ -1,28 +1,75 @@
-var { MissingData } = require('../utils/errors.js');
+var { MissingData, InternalVideoProcessingError } = require('../utils/errors.js');
 var getUuid = require('uuid');
 var fs = require('fs');
 var VideoProcessor = require('../utils/video-processor2.js');
 
 module.exports = class Video{
-    constructor(title, description, createdAt, data, thumbnail, tempFolder, callback){
+    constructor(title, description, createdAt, data, thumbnail, tempFolder, segmentFolder, callback){
         this.uuid = getUuid();
         this.title = propertyExists(title, "title");
         this.description = propertyExists(description, "description");
         this.createdAt = createdAt || new Date();
         this.data = propertyExists(data, "data");
-        this.thumbnail = thumbnail || createThumbnail(data);
         this.tempFolder = tempFolder || "temp";
-        this.segmentFolder;
+        this.segmentFolder = segmentFolder || "tests/test_files/test_output/";
+        this.segmentFolder += this.uuid + "/";
+        this.thumbnail = thumbnail;
+        this.thumbnailPath = `${this.segmentFolder}thumb.png`;
 
-        fs.writeFile(`${this.tempFolder}/${this.uuid}`,this.data, (err)=>{
-            if (err) throw err
-            console.log('tempFile created');
-            fs.writeFile(`${this.tempFolder}/${this.uuid}_th`, this.thumbnail, ()=>{
-                if (err) throw err
-                console.log('tempThumb created');
-                callback(this.removeTemp);
+        
+        this.writeTemp(()=>{
+            console.log("temp writing done");
+            this.saveThumbnail(thumbnail, () => {
+                console.log("thumbnail saved");
+                callback();
             });
         });
+        
+        
+    }
+
+    writeToDatabase(){
+        //TODO
+    }
+
+    writeTemp(callback){
+        fs.writeFile(`${this.tempFolder}/${this.uuid}`, this.data, (err) => {
+            if (err) throw err
+            console.log('tempFile created');
+            if(this.thumbnail){
+                fs.writeFile(`${this.tempFolder}/${this.uuid}_th`, this.thumbnail, () => {
+                    if (err) throw err
+                    console.log('tempThumb created');
+                    callback();
+                });
+            }else{
+                callback();
+            }
+        });
+    }
+    
+    saveThumbnail(thumbnail,callback){
+        let tempThumbnailPath = `./${this.tempFolder}/${this.uuid}_th`;
+        let tempVideoPath = `${this.tempFolder}/${this.uuid}`;
+        let destFolder = this.thumbnailPath.split("/").slice(0, this.thumbnailPath.split("/").length - 1).join("/") + "/";
+        if(thumbnail){
+            if (!fs.existsSync(destFolder)) {
+                fs.mkdirSync(destFolder);
+            }
+            fs.copyFile(tempThumbnailPath, this.thumbnailPath, (err) => {
+                if (err) throw new InternalVideoProcessingError(tempThumbnailPath, err);
+                callback();
+            });
+        }else{
+            VideoProcessor.getThumbnail(tempVideoPath, this.thumbnailPath, null, err => {
+                if (err) {
+                    throw InternalVideoProcessingError(tempVideoPath);
+                } else {
+                    callback();
+                }
+            });
+        }
+        
     }
 
     removeTemp(callback){
@@ -39,18 +86,18 @@ module.exports = class Video{
         });
     }
 
-    segmentVideo(path, callback, progress, frequency){
-        if (!fs.existsSync(path)) {
-            fs.mkdirSync(path);
+    segmentVideo(callback, progress, frequency){
+        if (!fs.existsSync(this.segmentFolder)) {
+            fs.mkdirSync(this.segmentFolder);
         }
 
         frequency = frequency || 1000;
-        this.segmentFolder = path;
-        let segmentator = new VideoProcessor.progress_object(`${this.tempFolder}/${this.uuid}`, path);
+        let segmentator = new VideoProcessor.progress_object(`${this.tempFolder}/${this.uuid}`, this.segmentFolder);
         segmentator.processVideo(()=>{
+            clearInterval(progressInterval);
             callback();
         });
-        setInterval(() => {
+        var progressInterval = setInterval(() => {
             progress(segmentator.progress);
         }, frequency);
         
