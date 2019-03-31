@@ -1,35 +1,52 @@
-var { MissingData, InternalVideoProcessingError } = require('../utils/errors.js');
+var { MissingData, InternalVideoProcessingError, DatabaseError, QueryDatabaseError, ConnDatabaseError } = require('../utils/errors.js');
 var getUuid = require('uuid');
 var fs = require('fs');
 var VideoProcessor = require('../utils/video-processor2.js');
+var mysql = require('mysql');
+var config = require("../config.js");
+config.mysql_creds.database = "neutrino_video";
 
-module.exports = class Video{
-    constructor(title, description, createdAt, data, thumbnail, tempFolder, segmentFolder, callback){
-        this.uuid = getUuid();
+var con = mysql.createConnection(config.mysql_creds);
+
+module.exports.Video = class Video{
+    constructor(title, description, createdAt, data, thumbnail, tempFolder, segmentFolder, callback, uuid){
+        this.uuid = uuid || getUuid();
         this.title = propertyExists(title, "title");
         this.description = propertyExists(description, "description");
         this.createdAt = createdAt || new Date();
-        this.data = propertyExists(data, "data");
+        this.data = data;
         this.tempFolder = tempFolder || "temp";
         this.segmentFolder = segmentFolder || "tests/test_files/test_output/";
-        this.segmentFolder += this.uuid + "/";
+        if(!this.segmentFolder.includes(this.uuid))
+            this.segmentFolder += this.uuid + "/";
         this.thumbnail = thumbnail;
         this.thumbnailPath = `${this.segmentFolder}thumb.png`;
-
         
-        this.writeTemp(()=>{
-            console.log("temp writing done");
-            this.saveThumbnail(thumbnail, () => {
-                console.log("thumbnail saved");
-                callback();
+        if(this.data){
+            this.writeTemp(() => {
+                console.log("temp writing done");
+                this.saveThumbnail(thumbnail, () => {
+                    console.log("thumbnail saved");
+                    if(callback) callback(this);
+                });
             });
-        });
-        
-        
+        }else{
+            if(callback) callback(this);
+        }
     }
 
-    writeToDatabase(){
-        //TODO
+    serialize(){
+        return {uuid:this.uuid, title:this.title, description:this.description, createdAt:this.createdAt, data:this.data, segmentFolder:this.segmentFolder, thumbnailPath:this.thumbnailPath};
+    }
+
+    writeMetadataToDatabase(callback){
+        con.connect((err) => {
+            if (err) throw ConnDatabaseError(err);
+            con.query("INSERT INTO `video`(`uuid`, `title`, `desc`, `createdAt`, `segmentFolder`, `thumbnailPath`) VALUES (?,?,?,?,?,?)", [this.uuid, this.title, this.description, this.createdAt, this.segmentFolder, this.thumbnailPath], (err, result) => {
+                if(err) throw QueryDatabaseError(err);
+                callback(result);
+            });
+        })
     }
 
     writeTemp(callback){
@@ -97,17 +114,27 @@ module.exports = class Video{
             clearInterval(progressInterval);
             callback();
         });
-        var progressInterval = setInterval(() => {
-            progress(segmentator.progress);
-        }, frequency);
+        if(progress){
+            var progressInterval = setInterval(() => {
+                progress(segmentator.progress);
+            }, frequency);
+        }
         
     }
     
 }
 
-function createThumbnail(video){
-    //TODO, creates thumbnail from video
-    return video
+module.exports.getVideoFromDb = (uuid) => {
+    return new Promise((resolve, reject) => {
+        con.query("SELECT * FROM video WHERE uuid = ?", [uuid], (err, result) => {
+            if (err) reject(err);
+            result = result[0];
+            console.log(result);
+            var thumbnail = fs.readFileSync(result.thumbnailPath);
+            new module.exports.Video(result.title, result.desc, new Date(result.createdAt), null, thumbnail, null, result.segmentFolder, resolve, uuid);
+        });
+    });
+    
 }
 
 function propertyExists(x, name) {

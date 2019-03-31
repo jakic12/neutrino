@@ -21,6 +21,30 @@ class InternalVideoProcessingError extends Error {
     }
 }
 
+class DatabaseError extends Error {
+    constructor(message){
+        super(`unknown database error: ${message}`);
+        this.name = "DatabaseError";
+        this.errorCode = 500;
+    }
+}
+
+class QueryDatabaseError extends DatabaseError {
+    constructor(message) {
+        super(`database error at query: ${message}`);
+        this.name = "QueryDatabaseError";
+        this.errorCode = 500;
+    }
+}
+
+class ConnDatabaseError extends DatabaseError {
+    constructor(message) {
+        super(`database error at connection: ${message}`);
+        this.name = "ConnDatabaseError";
+        this.errorCode = 500;
+    }
+}
+
 module.exports = {
     MissingData,
     FileWritingError,

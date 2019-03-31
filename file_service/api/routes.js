@@ -1,4 +1,4 @@
-var Video = require('../models/video.js');
+var { Video } = require('../models/video.js');
 const router = require('express').Router();
 
 router.get("/segment/:videoUuid/:index", (req,res) => {
