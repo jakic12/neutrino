@@ -1,0 +1,32 @@
+.container{
+    max-width: 100%;
+}
+#whole-bar{
+    border-bottom: 2px solid gray;
+}
+#inputSearchDiv{
+    margin:6px !important;
+}
+#navTitle{
+    font-size: 30px !important;
+    text-align: center;
+}
+#nested{
+    padding-top: 7px;
+    font-size: 20px;
+}
+#videoDiv{
+    max-height: 720px;
+    max-width: 1280px;
+    margin: 10px 0 0 10px;
+}
+#titleDesc{
+    max-width: 600px;
+}
+#videoTitle{
+    font-size: 40px;
+    text-align: center;
+}
+#videoDesc{
+    font-size:20px;
+}
